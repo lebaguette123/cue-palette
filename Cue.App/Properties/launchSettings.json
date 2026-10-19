@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Cue.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Cue.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
