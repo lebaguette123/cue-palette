@@ -6,8 +6,8 @@
         <RootNamespace>Cue_App</RootNamespace>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon Condition="Exists('Assets\AppIcon.ico')">Assets\AppIcon.ico</ApplicationIcon>
-        <Platforms>x86;x64;ARM64</Platforms>
-        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
+        <Platforms>x64</Platforms>
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
         <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
         <UseWinUI>true</UseWinUI>
         <WinUISDKReferences>false</WinUISDKReferences>
@@ -62,6 +62,10 @@
       <Compile Update="PaletteView.xaml.cs">
         <DependentUpon>PaletteView.xaml</DependentUpon>
       </Compile>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Cue.Core\Cue.Core.csproj" />
+      <ProjectReference Include="..\Cue.Windows\Cue.Windows.csproj" />
     </ItemGroup>
 
     <!--
