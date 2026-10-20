@@ -1,15 +1,7 @@
-﻿using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+﻿using Cue.Core.Hotkeys;
+using Cue.Windows;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -21,24 +13,40 @@ namespace Cue_App;
 /// </summary>
 public partial class App : Application
 {
-    private Window? _window;
+    private MainWindow? _window;
+    private IHotkeyService? _hotkeys;
+    private TrayIcon? _tray;
 
-    /// <summary>
-    /// Initializes the singleton application object.  This is the first line of authored code
-    /// executed, and as such is the logical equivalent of main() or WinMain().
-    /// </summary>
     public App()
     {
         InitializeComponent();
     }
 
-    /// <summary>
-    /// Invoked when the application is launched.
-    /// </summary>
-    /// <param name="args">Details about the launch request and process.</param>
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         _window = new MainWindow();
-        _window.Activate();
+        var hwnd = WindowNative.GetWindowHandle(_window);
+        
+        _hotkeys = new HotkeyService(hwnd);
+        _hotkeys.Pressed += _window.TogglePalette;
+        
+        _tray = new TrayIcon(hwnd, "Cue");
+        _tray.Clicked += _window.ShowPalette;
+        _tray.QuitRequested += Quit;
+
+        _window.Closed += (_, _) =>
+        {
+            _tray?.Dispose();
+            _hotkeys?.Dispose();
+        };
+
+        if (!_hotkeys.Register(HotkeyBinding.Default)) _window.ShowPalette();
+    }
+
+    private void Quit()
+    {
+        _tray?.Dispose();
+        _hotkeys?.Dispose();
+        Exit();
     }
 }
