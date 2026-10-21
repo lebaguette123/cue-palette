@@ -1,5 +1,7 @@
 ﻿using Cue.Core.Hotkeys;
 using Cue.Windows;
+using Cue.Core.Palette;
+using Cue.Core.Search;
 using Microsoft.UI.Xaml;
 using WinRT.Interop;
 
@@ -24,7 +26,7 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window = new MainWindow();
+        _window = new MainWindow(CreatePalette());
         var hwnd = WindowNative.GetWindowHandle(_window);
         
         _hotkeys = new HotkeyService(hwnd);
@@ -48,5 +50,23 @@ public partial class App : Application
         _tray?.Dispose();
         _hotkeys?.Dispose();
         Exit();
+    }
+
+    private static PaletteViewModel CreatePalette()
+    {
+        StaticItem[] items =
+        [
+            new("notepad",   "Notepad",            "Application"),
+            new("vscode",    "Visual Studio Code", "Application"),
+            new("terminal",  "Windows Terminal",   "Application"),
+            new("calc",      "Calculator",         "Application"),
+            new("lock",      "Lock workstation",   "System command"),
+            new("sleep",     "Sleep",              "System command"),
+            new("downloads", "Open Downloads",     "Folder"),
+            new("cue-repo",  "Open cue-palette",   "Project"),
+        ];
+
+        var engine = new SearchEngine([new StaticProvider("sample", items)]);
+        return new PaletteViewModel(engine);
     }
 }
