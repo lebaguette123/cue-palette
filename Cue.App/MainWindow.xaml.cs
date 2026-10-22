@@ -10,12 +10,25 @@ namespace Cue_App;
 public sealed partial class MainWindow : Window
 {
     private const int WidthDip = 640;
-    private const int HeightDip = 400;
+    private const int SearchRowHeightDip = 56;
+    private const int ResultRowHeightDip = 48;
+    private const int ListBottomMarginDip = 8;
+    private const int BorderThicknessDip = 2;
+
+    private const int MinimumHeightDip = 72;
+    private const int MaximumVisibleResults = 5;
+
+    private const int MaximumHeightDip =
+        SearchRowHeightDip
+        + ResultRowHeightDip * MaximumVisibleResults
+        + ListBottomMarginDip
+        + BorderThicknessDip;
 
     public MainWindow(PaletteViewModel viewModel)
     {
         InitializeComponent();
         Palette.ViewModel = viewModel;
+        Palette.ResultsUpdated += OnResultsUpdated;
         ConfigureWindow();
         Palette.EscapePressed += (_, _) => HidePalette();   // temporary until the hotkey exists
         Activated += OnActivated;
@@ -23,8 +36,9 @@ public sealed partial class MainWindow : Window
 
     public void ShowPalette()
     {
-        Palette.ResetForShow();
         PositionOnCursorMonitor();
+        Palette.ResetForShow();
+        
         AppWindow.Show();
         Activate();
         WindowFocus.BringToForeground(WindowNative.GetWindowHandle(this));
@@ -62,24 +76,46 @@ public sealed partial class MainWindow : Window
 
     private void PositionOnCursorMonitor()
     {
-        ResizePalette(HeightDip);
+        ResizePalette(MaximumHeightDip);
     }
 
     private void ResizePalette(int heightDip)
     {
         var (cursorX, cursorY) = Monitors.GetCursorPosition();
-        
+
         var area = DisplayArea.GetFromPoint(
-            new PointInt32(cursorX, cursorY), 
+            new PointInt32(cursorX, cursorY),
             DisplayAreaFallback.Nearest).WorkArea;
-        
+
         var scale = Monitors.GetScaleAt(cursorX, cursorY);
         var width = (int)(WidthDip * scale);
         var height = (int)(heightDip * scale);
 
         var x = area.X + (area.Width - width) / 2;
         var y = area.Y + (int)(area.Height * 0.2);
-        
+
         AppWindow.MoveAndResize(new RectInt32(x, y, width, height));
+    }
+    
+    private void OnResultsUpdated(object? sender, EventArgs e)
+    {
+        var viewModel = Palette.ViewModel
+                        ?? throw new InvalidOperationException(
+                            "PaletteView.ViewModel was not set");
+
+        ResizePalette(GetPaletteHeightDip(viewModel.Results.Count));
+    }
+
+    private static int GetPaletteHeightDip(int resultCount)
+    {
+        var visibleResults = Math.Clamp(
+            resultCount, 0, MaximumVisibleResults);
+
+        var height = SearchRowHeightDip
+                     + visibleResults * ResultRowHeightDip
+                     + ListBottomMarginDip
+                     + BorderThicknessDip;
+
+        return Math.Max(MinimumHeightDip, height);
     }
 }

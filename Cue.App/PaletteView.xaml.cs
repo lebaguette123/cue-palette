@@ -10,6 +10,8 @@ public sealed partial class PaletteView : UserControl
 {
     public event EventHandler? EscapePressed;
     private bool _suppressSearchTextChanged;
+    public event EventHandler? ResultsUpdated;
+    private long _searchRequestId;
     public PaletteViewModel? ViewModel
     {
         get;
@@ -43,8 +45,12 @@ public sealed partial class PaletteView : UserControl
     private async void OnSearchTextChanged(object sender, TextChangedEventArgs e)
     {
         if (_suppressSearchTextChanged) return;
-        var viewModel = ViewModel ?? throw new InvalidOperationException("PaletteView.ViewModel was not set");
-        await viewModel.SearchAsync(SearchBox.Text);
+
+        var viewModel = ViewModel
+                        ?? throw new InvalidOperationException(
+                            "PaletteView.ViewModel was not set");
+
+        await SearchAndNotifyAsync(viewModel, SearchBox.Text);
     }
 
     public void ResetForShow()
@@ -60,7 +66,19 @@ public sealed partial class PaletteView : UserControl
             _suppressSearchTextChanged = false;
         }
 
-        var viewModel = ViewModel ?? throw new InvalidOperationException("PaletteView.ViewModel was not set");
-        _ = viewModel.SearchAsync(string.Empty);
+        var viewModel = ViewModel
+                        ?? throw new InvalidOperationException(
+                            "PaletteView.ViewModel was not set");
+
+        _ = SearchAndNotifyAsync(viewModel, string.Empty);
+    }
+    
+    private async Task SearchAndNotifyAsync(PaletteViewModel viewModel, string query)
+    {
+        var requestId = ++_searchRequestId;
+        await viewModel.SearchAsync(query);
+        if (requestId != _searchRequestId) return;
+
+        ResultsUpdated?.Invoke(this, EventArgs.Empty);
     }
 }
